@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audio Player</title>
     <style>
-        /* Reset e estilos base */
+        :root {
+            --cor-1: #0F0F1A; /* Cor de fundo do body */
+            --cor-2: #1A1A2E; /* Cor de fundo do player */
+            --cor-3: #2A2A3A; /* Cor de fundo do waveform */
+            --cor-4: #6A6A9A; /* Cor das barras do waveform */
+            --cor-5: #FFFFFF; /* Cor dos ícones */
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -18,14 +25,13 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #0F0F1A;
+            background-color: var(--cor-1);
         }
 
-        /* Container do player de áudio */
         .audio-player {
             width: 100%;
             max-width: 600px;
-            background-color: #1A1A2E;
+            background-color: var(--cor-2);
             border-radius: 30px;
             padding: 10px 20px;
             display: flex;
@@ -33,8 +39,7 @@
             gap: 20px;
         }
 
-        /* Estilos do botão play/pause */
-        .play-pause-btn {
+        .play-pause-btn, .volume-btn {
             background: none;
             border: none;
             cursor: pointer;
@@ -42,16 +47,16 @@
             height: 40px;
         }
 
-        .play-pause-btn svg {
+        .play-pause-btn svg, .volume-btn svg {
             width: 100%;
             height: 100%;
+            fill: var(--cor-5);
         }
 
-        /* Estilos do waveform */
         .waveform {
             flex-grow: 1;
             height: 40px;
-            background: #2A2A3A;
+            background: var(--cor-3);
             border-radius: 20px;
             overflow: hidden;
             position: relative;
@@ -67,11 +72,10 @@
 
         .waveform-bar {
             width: 3px;
-            background-color: #6A6A9A;
+            background-color: var(--cor-4);
             transition: height 0.2s ease;
         }
 
-        /* Animação do waveform */
         @keyframes soundwave {
             0% { height: 10%; }
             50% { height: 100%; }
@@ -87,21 +91,6 @@
             animation-play-state: paused;
         }
 
-        /* Estilos do botão de volume */
-        .volume-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            width: 30px;
-            height: 30px;
-        }
-
-        .volume-btn svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Estilos responsivos */
         @media (max-width: 480px) {
             .audio-player {
                 padding: 8px 15px;
@@ -122,8 +111,8 @@
 <body>
     <div class="audio-player">
         <button class="play-pause-btn" aria-label="Play or Pause">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="#FFFFFF"/>
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
             </svg>
         </button>
         <div class="waveform playing">
@@ -132,8 +121,8 @@
             </div>
         </div>
         <button class="volume-btn" aria-label="Mute or Unmute">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="#FFFFFF"/>
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
         </button>
     </div>
@@ -145,10 +134,9 @@
             const waveform = document.querySelector('.waveform');
             const waveformBars = document.querySelector('.waveform-bars');
             const audio = new Audio('https://radio.saopaulo01.com.br:10841/stream');
-            let isPlaying = true;
-            let isMuted = false;
+            let isPlaying = localStorage.getItem('isPlaying') !== 'false';
+            let isMuted = localStorage.getItem('isMuted') === 'true';
 
-            // Função para criar as barras do waveform
             function createWaveformBars() {
                 for (let i = 0; i < 30; i++) {
                     const bar = document.createElement('div');
@@ -158,43 +146,52 @@
                 }
             }
 
-            // Função para alternar play/pause
             function togglePlayPause() {
                 if (isPlaying) {
                     audio.pause();
-                    playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z" fill="#FFFFFF"/></svg>';
+                    playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
                     waveform.classList.remove('playing');
                 } else {
                     audio.play();
-                    playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="#FFFFFF"/></svg>';
+                    playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
                     waveform.classList.add('playing');
                 }
                 isPlaying = !isPlaying;
+                localStorage.setItem('isPlaying', isPlaying);
             }
 
-            // Função para alternar mudo/som
             function toggleMute() {
                 audio.muted = !audio.muted;
                 isMuted = audio.muted;
                 volumeBtn.innerHTML = isMuted
-                    ? '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" fill="#FFFFFF"/></svg>'
-                    : '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="#FFFFFF"/></svg>';
+                    ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>'
+                    : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+                localStorage.setItem('isMuted', isMuted);
             }
 
-            // Event listeners
             playPauseBtn.addEventListener('click', togglePlayPause);
             volumeBtn.addEventListener('click', toggleMute);
 
-            // Criar as barras do waveform
             createWaveformBars();
 
-            // Iniciar a reprodução automaticamente
-            audio.play().catch(e => {
-                console.log("Autoplay foi bloqueado pelo navegador. O usuário precisa interagir com a página primeiro.");
-                isPlaying = false;
+            // Configurar o estado inicial com base no localStorage
+            if (isPlaying) {
+                audio.play().catch(e => {
+                    console.log("Autoplay foi bloqueado pelo navegador. O usuário precisa interagir com a página primeiro.");
+                    isPlaying = false;
+                    waveform.classList.remove('playing');
+                    playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
+                    localStorage.setItem('isPlaying', false);
+                });
+            } else {
                 waveform.classList.remove('playing');
-                playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z" fill="#FFFFFF"/></svg>';
-            });
+                playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
+            }
+
+            audio.muted = isMuted;
+            if (isMuted) {
+                volumeBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+            }
         });
     </script>
 </body>
