@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player de Áudio Elegante com Relógio</title>
+    <style>
+        :root {
+            --cor-1: #0f0f1a;
+            --cor-2: #1a1a2e;
+            --cor-3: #2a2a3a;
+            --cor-4: #6a6a9a;
+            --cor-5: #ffffff;
+            --gradient-start: #8e2de2;
+            --gradient-end: #4a00e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--cor-1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .audio-player {
+            width: 100%;
+            max-width: 400px;
+            background: linear-gradient(135deg, var(--cor-2), var(--cor-3));
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .audio-player.minimized {
+            max-width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            padding: 10px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, var(--gradient-start), var(--gradient-end));
+            z-index: -1;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover::before {
+            opacity: 1;
+        }
+
+        .btn svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--cor-5);
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .btn:hover svg {
+            transform: scale(1.1);
+        }
+
+        .clock-date {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--cor-5);
+            font-size: 0.9rem;
+        }
+
+        .clock {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .waveform {
+            height: 40px;
+            background: var(--cor-3);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .waveform-bars {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 100%;
+            padding: 0 5px;
+        }
+
+        .waveform-bar {
+            width: 3px;
+            background: linear-gradient(to top, var(--gradient-start), var(--gradient-end));
+            transition: height 0.2s ease;
+            border-radius: 1.5px;
+        }
+
+        @keyframes soundwave {
+            0%, 100% { height: 10%; }
+            50% { height: 100%; }
+        }
+
+        .waveform.playing .waveform-bar {
+            animation: soundwave 1.5s ease-in-out infinite;
+            animation-play-state: running;
+        }
+
+        .waveform:not(.playing) .waveform-bar {
+            animation-play-state: paused;
+        }
+
+        .minimize-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .minimize-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: var(--cor-5);
+        }
+
+        @media (max-width: 480px) {
+            .audio-player {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="audio-player" id="audioPlayer">
+        <button class="minimize-btn" id="minimizeBtn" aria-label="Minimizar player">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+        </button>
+        <div class="controls">
+            <button class="btn play-pause-btn" id="playPauseBtn" aria-label="Play ou Pause">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+            <div class="clock-date">
+                <div class="clock" id="clock"></div>
+                <div class="date" id="date"></div>
+            </div>
+            <button class="btn volume-btn" id="volumeBtn" aria-label="Mudo ou Com som">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="waveform" id="waveform">
+            <div class="waveform-bars"></div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const audioPlayer = document.getElementById('audioPlayer');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const volumeBtn = document.getElementById('volumeBtn');
+            const waveform = document.getElementById('waveform');
+            const waveformBars = document.querySelector('.waveform-bars');
+            const minimizeBtn = document.getElementById('minimizeBtn');
+            const clockElement = document.getElementById('clock');
+            const dateElement = document.getElementById('date');
+            const audio = new Audio("https://radio.saopaulo01.com.br:10841/stream");
+            
+            let isPlaying = false;
+            let isMuted = false;
+            let isMinimized = false;
+
+            function createWaveformBars() {
+                for (let i = 0; i < 20; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'waveform-bar';
+                    bar.style.animationDelay = `${i * 0.1}s`;
+                    waveformBars.appendChild(bar);
+                }
+            }
+
+            function togglePlayPause() {
+                if (isPlaying) {
+                    audio.pause();
+                    playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
+                    waveform.classList.remove('playing');
+                } else {
+                    audio.play().catch(e => console.log('Erro ao reproduzir áudio:', e));
+                    playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+                    waveform.classList.add('playing');
+                }
+                isPlaying = !isPlaying;
+            }
+
+            function toggleMute() {
+                audio.muted = !audio.muted;
+                isMuted = audio.muted;
+                volumeBtn.innerHTML = isMuted
+                    ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>'
+                    : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+            }
+
+            function toggleMinimize() {
+                isMinimized = !isMinimized;
+                audioPlayer.classList.toggle('minimized');
+                minimizeBtn.innerHTML = isMinimized
+                    ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>'
+                    : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>';
+                
+                if (isMinimized) {
+                    waveform.style.display = 'none';
+                    document.querySelector('.clock-date').style.display = 'none';
+                } else {
+                    waveform.style.display = 'block';
+                    document.querySelector('.clock-date').style.display = 'flex';
+                }
+            }
+
+            function updateClock() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const dateString = now.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                clockElement.textContent = timeString;
+                dateElement.textContent = dateString;
+            }
+
+            playPauseBtn.addEventListener('click', togglePlayPause);
+            volumeBtn.addEventListener('click', toggleMute);
+            minimizeBtn.addEventListener('click', toggleMinimize);
+
+            createWaveformBars();
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Tratamento de erros para o carregamento do áudio
+            audio.addEventListener('error', (e) => {
+                console.error('Erro ao carregar o áudio:', e);
+                alert('Não foi possível carregar o áudio. Por favor, tente novamente mais tarde.');
+            });
+
+            // Melhoria na experiência do usuário em dispositivos móveis
+            document.addEventListener('touchstart', () => {
+                if (!isPlaying) {
+                    audio.load();
+                }
+            }, { once: true });
+        })();
+    </script>
+</body>
+</html>
