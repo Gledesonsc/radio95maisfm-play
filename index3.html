@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Glass Effect Audio Player</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap');
+
+      :root {
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --text-color: #ffffff;
+        --icon-color: rgba(255, 255, 255, 0.8);
+        --highlight-color: #00ffff;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Poppins', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(45deg, #3a1c71, #d76d77, #ffaf7b);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        overflow: hidden;
+      }
+
+      @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      .audio-player {
+        width: 90%;
+        max-width: 600px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        transform: translateY(50px);
+        opacity: 0;
+        animation: fadeIn 1s ease-out forwards;
+      }
+
+      @keyframes fadeIn {
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .play-pause-btn,
+      .volume-btn {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        cursor: pointer;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .play-pause-btn::before,
+      .volume-btn::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, transparent, var(--highlight-color), transparent);
+        z-index: -1;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .play-pause-btn:hover::before,
+      .volume-btn:hover::before {
+        opacity: 1;
+      }
+
+      .play-pause-btn svg,
+      .volume-btn svg {
+        width: 30px;
+        height: 30px;
+        fill: var(--icon-color);
+        z-index: 2;
+        transition: transform 0.3s ease, fill 0.3s ease;
+      }
+
+      .play-pause-btn:hover svg,
+      .volume-btn:hover svg {
+        transform: scale(1.1);
+        fill: var(--highlight-color);
+      }
+
+      .waveform {
+        flex-grow: 1;
+        height: 60px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 30px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .waveform-bars {
+        display: flex;
+        justify-content: space-around;
+        align-items: flex-end;
+        height: 100%;
+        padding: 0 10px;
+      }
+
+      .waveform-bar {
+        width: 3px;
+        background: var(--icon-color);
+        transition: height 0.2s ease, background 0.3s ease;
+        border-radius: 2px;
+      }
+
+      .waveform.playing .waveform-bar {
+        background: var(--highlight-color);
+      }
+
+      @keyframes soundwave {
+        0%, 100% { height: 10%; }
+        50% { height: 100%; }
+      }
+
+      .waveform.playing .waveform-bar {
+        animation: soundwave 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.4); }
+        70% { box-shadow: 0 0 0 20px rgba(0, 255, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 255, 255, 0); }
+      }
+
+      .play-pause-btn {
+        animation: pulse 2s infinite;
+      }
+
+      @media (max-width: 480px) {
+        .audio-player {
+          padding: 20px;
+          gap: 15px;
+        }
+
+        .play-pause-btn,
+        .volume-btn {
+          width: 50px;
+          height: 50px;
+        }
+
+        .waveform {
+          height: 50px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="audio-player">
+      <button class="play-pause-btn" aria-label="Play or Pause">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </button>
+      <div class="waveform">
+        <div class="waveform-bars">
+          <!-- As barras do waveform serão adicionadas dinamicamente via JavaScript -->
+        </div>
+      </div>
+      <button class="volume-btn" aria-label="Mute or Unmute">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const playPauseBtn = document.querySelector(".play-pause-btn");
+        const volumeBtn = document.querySelector(".volume-btn");
+        const waveform = document.querySelector(".waveform");
+        const waveformBars = document.querySelector(".waveform-bars");
+        const audio = new Audio("https://radio.saopaulo01.com.br:10841/stream");
+        let isPlaying = localStorage.getItem("isPlaying") !== "false";
+        let isMuted = localStorage.getItem("isMuted") === "true";
+
+        function createWaveformBars() {
+          for (let i = 0; i < 50; i++) {
+            const bar = document.createElement("div");
+            bar.className = "waveform-bar";
+            bar.style.animationDelay = `${i * 0.05}s`;
+            bar.style.height = `${Math.random() * 90 + 10}%`;
+            waveformBars.appendChild(bar);
+          }
+        }
+
+        function togglePlayPause() {
+          if (isPlaying) {
+            audio.pause();
+            playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
+            waveform.classList.remove("playing");
+            playPauseBtn.style.animation = 'pulse 2s infinite';
+          } else {
+            audio.play();
+            playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            waveform.classList.add("playing");
+            playPauseBtn.style.animation = 'none';
+          }
+          isPlaying = !isPlaying;
+          localStorage.setItem("isPlaying", isPlaying);
+        }
+
+        function toggleMute() {
+          audio.muted = !audio.muted;
+          isMuted = audio.muted;
+          volumeBtn.innerHTML = isMuted
+            ? '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>'
+            : '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+          localStorage.setItem("isMuted", isMuted);
+        }
+
+        playPauseBtn.addEventListener("click", togglePlayPause);
+        volumeBtn.addEventListener("click", toggleMute);
+
+        createWaveformBars();
+
+        // Configurar o estado inicial com base no localStorage
+        if (isPlaying) {
+          audio.play().catch((e) => {
+            console.log("Autoplay foi bloqueado pelo navegador. O usuário precisa interagir com a página primeiro.");
+            isPlaying = false;
+            waveform.classList.remove("playing");
+            playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
+            playPauseBtn.style.animation = 'pulse 2s infinite';
+            localStorage.setItem("isPlaying", false);
+          });
+        } else {
+          waveform.classList.remove("playing");
+          playPauseBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>';
+          playPauseBtn.style.animation = 'pulse 2s infinite';
+        }
+
+        audio.muted = isMuted;
+        if (isMuted) {
+          volumeBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+        }
+      });
+    </script>
+  </body>
+</html>
